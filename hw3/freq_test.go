@@ -21,6 +21,10 @@ var testCases = []testCaseType{
 		count: 10,
 		words: []string{"и", "в", "что", "доме", "не", "с", "семьи", "все", "день", "домочадцы"},
 	},
+	{text: `in out.`,
+		count: 10,
+		words: []string{"in", "out"},
+	},
 }
 
 func sliceEqual(s1 []string, s2 []string) bool {
@@ -41,9 +45,7 @@ func TestLoremIpsum(t *testing.T) {
 
 	for _, testCase := range testCases {
 		result := TopWords(testCase.text, testCase.count)
-		for _, val := range result {
-			println(val)
-		}
+
 		assert.Equal(t, true, sliceEqual(testCase.words, result))
 	}
 }
