@@ -41,11 +41,32 @@ func sliceEqual(s1 []string, s2 []string) bool {
 	return true
 }
 
-func TestLoremIpsum(t *testing.T) {
+func TestTopWordsSlice(t *testing.T) {
 
 	for _, testCase := range testCases {
-		result := TopWords(testCase.text, testCase.count)
+		result := TopWordsSlice(testCase.text, testCase.count)
 
 		assert.Equal(t, true, sliceEqual(testCase.words, result))
+	}
+}
+
+func TestTopWordsMap(t *testing.T) {
+
+	for _, testCase := range testCases {
+		result := TopWordsMap(testCase.text, testCase.count)
+
+		assert.Equal(t, true, sliceEqual(testCase.words, result))
+	}
+}
+
+func BenchmarkTopWordsSlice(b *testing.B) {
+	for _, testCase := range testCases {
+		TopWordsSlice(testCase.text, testCase.count)
+	}
+}
+
+func BenchmarkTopWordsMap(b *testing.B) {
+	for _, testCase := range testCases {
+		TopWordsMap(testCase.text, testCase.count)
 	}
 }
