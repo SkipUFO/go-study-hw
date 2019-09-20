@@ -60,13 +60,17 @@ func TestTopWordsMap(t *testing.T) {
 }
 
 func BenchmarkTopWordsSlice(b *testing.B) {
-	for _, testCase := range testCases {
-		TopWordsSlice(testCase.text, testCase.count)
+	for i := 0; i < b.N; i++ {
+		for _, testCase := range testCases {
+			TopWordsSlice(testCase.text, testCase.count)
+		}
 	}
 }
 
 func BenchmarkTopWordsMap(b *testing.B) {
-	for _, testCase := range testCases {
-		TopWordsMap(testCase.text, testCase.count)
+	for i := 0; i < b.N; i++ {
+		for _, testCase := range testCases {
+			TopWordsMap(testCase.text, testCase.count)
+		}
 	}
 }
