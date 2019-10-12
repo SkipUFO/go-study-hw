@@ -1,74 +1,88 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"time"
 )
 
-func work(tasks []func()) {
-	// Стартуем подсчет ошибок
-	go func(err *int) {
-		for x := range Errors {
-			*err = *err + x
-			fmt.Printf("error count: %d\n", ErrorCount)
-		}
-	}(&ErrorCount)
+func work(tasks []func() error) {
+	for i := 0; i < MaxWorkingGoroutines; i++ {
+		go func() {
+			for {
+				f, _ := <-functions
+				if len(errored) == MaxErrorCount {
+					fmt.Println("max errors exceeded")
+					return
+				}
 
-	for _, f := range tasks {
-		// Записываем в канал с Max-размером N, если мы его заполним,
-		// то он заблокируется на запись до завершения одной из горутин
-		WorkingTasks <- 1
-
-		if ErrorCount == MaxErrorCount {
-			fmt.Println("Max error count occurred")
-			return
-		}
-
-		go f()
+				if err := f(); err != nil {
+					fmt.Println("error detected")
+					errored <- 1
+				}
+			}
+		}()
 	}
 
+	for _, f := range tasks {
+		functions <- f
+	}
 }
 
 // MaxWorkingGoroutines - максимальное кол-во работающих горутин
-var MaxWorkingGoroutines = 1
+var MaxWorkingGoroutines = 2
 
 // MaxErrorCount - максимальное кол-во ошибок
 var MaxErrorCount = 1
 
 // ErrorCount - кол-во ошибок
-var ErrorCount = 0
+//var ErrorCount = 0
 
-// WorkingTasks - канал, который хранит текущее кол-во запущенных горутин
-var WorkingTasks = make(chan int, MaxWorkingGoroutines)
+var functions = make(chan func() error, MaxWorkingGoroutines)
 
-// Errors - канал, через который приходит инфа об ошибке
-var Errors = make(chan int)
+var errored = make(chan int, MaxErrorCount)
 
 func main() {
 
-	tasks := []func(){
-		func() {
+	tasks := []func() error{
+		func() error {
 			fmt.Println("f1")
-			Errors <- 1
 			time.Sleep(1 * time.Second)
-
-			x := <-WorkingTasks
-			fmt.Printf("wt: %d\n", x)
+			return errors.New("error1")
 		},
-		func() {
+		func() error {
 			fmt.Println("f2")
 			time.Sleep(1 * time.Second)
-			x := <-WorkingTasks
-			fmt.Printf("wt: %d\n", x)
+			return nil
+		},
+		func() error {
+			fmt.Println("f3")
+			time.Sleep(1 * time.Second)
+			return errors.New("error2")
+		},
+		func() error {
+			fmt.Println("f4")
+			time.Sleep(1 * time.Second)
+			return nil
 		}}
 
 	work(tasks)
 
-	time.Sleep(3 * time.Second)
+	for {
+		if len(functions) == 0 {
+			break
+		}
 
-	close(WorkingTasks)
-	close(Errors)
+		if len(errored) == MaxErrorCount {
+			break
+		}
+
+		time.Sleep(time.Second)
+		fmt.Println("wait for finish")
+	}
+
+	close(errored)
 
 	os.Exit(0)
 }
