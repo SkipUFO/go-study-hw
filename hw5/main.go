@@ -83,6 +83,7 @@ func main() {
 	}
 
 	close(errored)
+	close(functions)
 
 	os.Exit(0)
 }
